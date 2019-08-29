@@ -1,0 +1,271 @@
+---
+title: "MAF analysis of 1KG data"
+author: "JEM"
+date: "8/22/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r}
+
+#module unload R/3.6.1 
+#module load R/3.5.0 
+rm(list=ls())
+
+library(tidyverse)
+#toy data
+###########
+
+
+
+dis_test <- read.table("~/Desktop/projects/domains/1kg/20190827_1kg_b38_select_MAF_chr1-22_A02.1/ALL.chr1-22_GRCh38_sites.20170504_temp2_coding_exons_disorder_Rinput.txt", header = FALSE)
+colnames(dis_test) <- c("chr", "start", "end", "rsid", "AF", "EAS_AF", "AMR_AF", "AFR_AF", "EUR_AF", "SAS_AF")
+head(dis_test)
+dim(dis_test)
+#dis_pass <- dis_test %>% filter(FILTER == "PASS")
+dis_pass <- dis_test
+#filter
+
+#Isolate afs 
+colnames(dis_pass)
+dis_pass_af <- dis_pass[,c(5:10)]
+
+#gather for graph making
+dis_pass_af_gtr <- gather(dis_pass_af)
+
+#convert to numeric
+dis_pass_af_gtr$value <- as.numeric(as.character(dis_pass_af_gtr$value))
+head(dis_pass_af_gtr)
+##################################################################
+
+```
+
+```{r}
+
+colnames(dis_pass_af)
+
+dim(dis_pass_af_gtr)
+dim(dis_pass_af_gtr %>% filter( is.na(value) | value == 0))# 343077 NA/0's
+dim(dis_pass_af_gtr %>% filter( !is.na(value) & value != 0))# 237417 values
+
+d_out <- dis_pass_af_gtr %>% filter( is.na(value) | value == 0)
+d <- dis_pass_af_gtr %>% filter( !is.na(value) & value != 0)
+dim(dis_pass_af_gtr)# 580494 total variants
+343077 + 237417 #580494 (add NA/0's and values)
+dim(d_out)#343077 #filtered out
+dim(d)#237417 #Kept
+
+
+
+ggplot(d, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') + ggtitle("chr22 (PASS) 1000 Genomes Project")
+
+
+ggplot(d, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + xlim(0,.5)  + ggtitle("chr22 (PASS) 1000 Genomes Project (all)")
+
+ggplot(d, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + xlim(0,.5) +ylim(0,30) + ggtitle("chr22 (PASS) 1000 Genomes Project (zoom)")
+
+```
+
+
+
+```{r}
+d_naf <- subset(d, key != "AF")
+
+
+
+
+
+
+ggplot(d_naf, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + xlim(0,.5)  + ggtitle("chr22 (PASS) 1000 Genomes Project (all)")
+
+ggplot(d_naf, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + xlim(0,.2) +ylim(0,30) + ggtitle("chr22 (PASS) 1000 Genomes Project (zoom)")
+
+
+ggplot(d_naf, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') + 
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+  
+ggplot(d_naf, aes(x=value,  colour = key )) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+ggplot(d_naf, aes(x=value,  colour = key )) + geom_density(na.rm = TRUE) + xlim(0,.01) +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+
+
+ggplot(d_naf, aes(x=value,  fill = key )) + geom_density(na.rm = TRUE) + xlim(0,.01) +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+
+ggplot(d_naf, aes(x=value,  fill = key )) + geom_density(na.rm = TRUE, position = "stack") + xlim(0,.01) +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+
+
+```
+
+
+```{r}
+d_naf %>% group_by(key) %>% summarize(count = n())
+
+
+ggplot(d_naf, aes(x=value,  fill = key )) + geom_histogram(na.rm = TRUE,alpha=0.5, position="identity") + xlim(0,.01) +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+
+ggplot(d_naf, aes(x=value,  fill = key )) + geom_density(na.rm = TRUE, position = "stack") + xlim(0,.01) +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+
+###Filter MAF < 0.05
+
+d_naf_lf <- d_naf %>% filter(value < 0.05)
+
+ggplot(d_naf_lf, aes(x=value,  fill = key )) + geom_density(na.rm = TRUE) + xlim(0,.01) +  
+  ggtitle("Uniprot disordered region MAF in 1000 Genomes Project")  
+
+
+
+```
+
+```{r}
+
+
+
+hel_test <- read.table("~/Desktop/projects/domains/1kg/20190827_1kg_b38_select_MAF_chr1-22_A02.1/ALL.chr1-22_GRCh38_sites.20170504_temp2_coding_exons_helix_Rinput.txt", header = FALSE)
+colnames(hel_test) <- c("chr", "start", "end", "rsid", "AF", "EAS_AF", "AMR_AF", "AFR_AF", "EUR_AF", "SAS_AF")
+head(hel_test)
+#hel_pass <- hel_test %>% filter(FILTER == "PASS")
+hel_pass <- hel_test
+#filter
+
+#Isolate afs 
+colnames(hel_pass)
+hel_pass_af <- hel_pass[,c(5:10)]
+
+#gather for graph making
+hel_pass_af_gtr <- gather(hel_pass_af)
+
+#convert to numeric
+hel_pass_af_gtr$value <- as.numeric(as.character(hel_pass_af_gtr$value))
+
+##################################################################
+
+```
+
+```{r}
+
+colnames(hel_pass_af)
+
+dim(hel_pass_af_gtr)#319062
+h <- hel_pass_af_gtr %>% filter( !is.na(value) & value != 0)
+
+dim(h)#127,594 #Kept
+
+h_naf <- subset(h, key != "AF")
+
+ggplot(h_naf, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') + ggtitle("chr22 (PASS) 1000 Genomes Project")
+
+ggplot(h, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + xlim(0,.5)  + ggtitle("chr22 (PASS) 1000 Genomes Project (all)")
+
+ggplot(h, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + xlim(0,.5) +ylim(0,30) 
+
+```
+
+
+```{r}
+h_af <- subset(h, key == "AF")
+d_af <- subset(d, key == "AF")
+
+
+h_af$key <- paste0( "helix")
+head(h_af)
+d_af$key <- paste0( "disorder")
+head(d_af)
+hd_af <- rbind(h_af, d_af)
+dim(hd_af)
+
+ggplot(hd_af, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') + ggtitle("Uniprot annotation MAF in 1000 Genomes Project")  
+ggsave(filename = "Uniprot_dis_hel_MAF_1kg.png",device = "png",dpi = 300, width = 6, height = 4, units = "in")
+getwd()
+
+ggplot(hd_af, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + ggtitle("Uniprot annotation MAF in 1000 Genomes Project")  + xlim(0,.01)
+
+
+```
+
+```{r}
+#graph all freq
+h_nnaf <- subset(h, key != "AF")
+d_nnaf <- subset(d, key != "AF")
+
+
+h_nnaf$Feature <- paste0( "helix")
+head(h_nnaf)
+d_nnaf$Feature <- paste0( "disorder")
+head(d_nnaf)
+hd_nnaf <- rbind(h_nnaf, d_nnaf)
+dim(hd_nnaf)
+
+ggplot(hd_nnaf, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') + ggtitle("Uniprot annotation MAF in 1000 Genomes Project") 
+ggplot(hd_nnaf, aes(x=value,  colour = Feature)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') +ggtitle("Uniprot annotation MAF in 1000 Genomes Project") 
+
+ggplot(hd_nnaf, aes(x=value,  colour = Feature)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') +ggtitle("Uniprot annotation MAF in 1000 Genomes Project") + facet_wrap( ~ key)
+ggsave(filename = "Uniprot_dis_hel_MAF_log10_1kg.png",device = "png",dpi = 300, width = 6, height = 4, units = "in")
+
+
+
+ggplot(hd_nnaf, aes(x=value, colour = key)) + geom_density(na.rm = TRUE) + scale_x_continuous(trans='log10') + ggtitle("Uniprot annotation MAF in 1000 Genomes Project") 
+
+ggsave(filename = "Uniprot_dis_hel_MAF_1kg.png",device = "png",dpi = 300, width = 6, height = 4, units = "in")
+
+getwd()
+
+ggplot(hd_af, aes(x=value,  colour = key)) + geom_density(na.rm = TRUE) + ggtitle("Uniprot annotation MAF in 1000 Genomes Project")  + xlim(0,.01)
+
+
+
+```
+
+
+```{r}
+#Low freq
+
+d_naf_lf_sum <- d_naf_lf %>% group_by(key) %>% summarize(count = n())
+
+h_naf_lf_sum <- h_naf %>% filter(value < 0.05) %>% group_by(key) %>% summarize(count = n())
+d_naf_lf_sum$type <- c("disorder")
+h_naf_lf_sum$type <- c("helix")
+dh_naf_lf_sum <- rbind(d_naf_lf_sum, h_naf_lf_sum)
+ggplot(dh_naf_lf_sum, aes(x =key ,  y = count , fill = type)) + geom_bar(na.rm = TRUE, position = "dodge", stat = "identity") +  ggtitle("Fraction of Low-frequency ")  
+
+```
+
+
+```{r}
+#calculate total bp of disorder and helix
+
+h_naf_total <- h_naf %>% group_by(key) %>% summarize(count = n()) 
+h_naf_total$type <- c("helix")
+h_naf_total$count_type <- c("total")
+h_naf_lf_sum$count_type <- c("low-frq")
+h_naf_tot_lf_sum <- merge(h_naf_lf_sum,h_naf_total, by = "key" )
+
+h_naf_tot_lf_sum <- h_naf_tot_lf_sum %>% mutate(fraction_LF = count.x/count.y)
+
+d_naf_total <- d_naf %>% group_by(key) %>% summarize(count = n()) 
+d_naf_total$type <- c("disorder")
+d_naf_total$count_type <- c("total")
+d_naf_lf_sum$count_type <- c("low-frq")
+d_naf_tot_lf_sum <- merge(d_naf_lf_sum,d_naf_total, by = "key" )
+
+d_naf_tot_lf_sum <- d_naf_tot_lf_sum %>% mutate(fraction_LF = count.x/count.y)
+
+dh_all <- rbind(h_naf_tot_lf_sum,d_naf_tot_lf_sum)
+
+ggplot(dh_all, aes(x =key ,  y = fraction_LF , fill = type.x)) + geom_bar(na.rm = TRUE, position = "dodge", stat = "identity") +  ggtitle("Fraction")  
+ggsave(filename = "Uniprot_dis_hel_bar_lowMAF_1kg.png",device = "png",dpi = 300, width = 6, height = 4, units = "in")
+
+```
+
